@@ -1,0 +1,47 @@
+<resources>
+    <string name="app_name">Insta</string>
+    <!-- TITULO-->
+    <string name="titulo">flash</string>
+
+    <!-- LOGIN-->
+    <string name="login">log in</string>
+    <string name="register">registrarse</string>
+    <string name="email">Email</string>
+    <string name="password">Contraseña</string>
+    <string name="txtLoginRegistrar">Crear cuenta</string>
+
+    <!-- REGISTRO-->
+    <string name="txtEmail">Email</string>
+    <string name="txtPassword">Contraseña</string>
+    <string name="txtPassword2">Repetir contraseña</string>
+    <string name="txtUsername">Username</string>
+    <string name="txtNombre">Nombre</string>
+    <string name="txtApellido1">Primer apellido</string>
+    <string name="txtApellido2">Segundo Apellido</string>
+    <string name="txtFecha">Fecha de Nacimiento</string>
+    <string name="txtTelefono">Telefono</string>
+    <string name="txtImagen">Imagen</string>
+    <string name="txtGenero">Género</string>
+
+    <string-array name="genres_array">
+        <item>Masculino</item>
+        <item>Femenino</item>
+        <item>Otro</item>
+    </string-array>
+
+
+    <!-- ERRORES -->
+    <string name="errorCamposRellenos">Rellene todos los campos</string>
+    <string name="errorCampoEmail">El formato del email no es correcto</string>
+    <string name="errorPasswordMatch">Las contraseñas deben coincidir</string>
+
+    <!-- Dialogs -->
+    <string name="dialogTitleSure">¿Estás seguro?</string>
+    <string name="dialogOptionYes">Sí</string>
+    <string name="dialogOptionNo">No</string>
+    <string name="dialogTxtDeletePhoto">¿Eliminar foto?</string>
+
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
