@@ -32,8 +32,11 @@
 
     <!-- ERRORES -->
     <string name="errorCamposRellenos">Rellene todos los campos</string>
+    <string name="errorPhoneNumber">Compruebe el formato del teléfono</string>
     <string name="errorCampoEmail">El formato del email no es correcto</string>
     <string name="errorPasswordMatch">Las contraseñas deben coincidir</string>
+    <string name="errorServerConnect">Error al conectar con el servidor</string>
+
 
     <!-- Dialogs -->
     <string name="dialogTitleSure">¿Estás seguro?</string>

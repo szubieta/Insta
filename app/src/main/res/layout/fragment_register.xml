@@ -23,6 +23,25 @@
         android:textColor="@color/azulClaro"
         />
 
+    <TextView
+        android:id="@+id/txtErrorRegistro"
+        android:layout_width="match_parent"
+        android:layout_height="25dp"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@+id/btnRegistroRegister"
+        android:textColor="@color/errorRed"
+        android:fontFamily="@font/comfortaa_light"/>
+
+    <ProgressBar
+        android:id="@+id/progressBarRegister"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="-20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnRegistroRegister"
+        android:visibility="invisible"/>
 
     <ScrollView
         android:id="@+id/scrollView2"

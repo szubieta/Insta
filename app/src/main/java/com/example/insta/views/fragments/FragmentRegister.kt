@@ -16,10 +16,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
-import android.util.Base64
-import android.util.Log
 import android.util.Patterns
-import android.util.TypedValue
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -29,15 +26,18 @@ import android.webkit.MimeTypeMap
 import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
 
 import com.example.insta.R
 import com.example.insta.api.MiRetrofitBuilder
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.theartofdev.edmodo.cropper.CropImage
 import com.theartofdev.edmodo.cropper.CropImageView
 import kotlinx.android.synthetic.main.fragment_register.*
 import kotlinx.android.synthetic.main.fragment_register.view.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -45,23 +45,23 @@ import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import retrofit2.converter.gson.GsonConverterFactory
 import java.io.*
 import java.util.*
 
 class FragmentRegister : Fragment() {
 
+    //variables estaticas privadas, codigo intent
     private companion object {
         const val PERMISSIONSTORAGE = 1
         const val GALLERYCODE = 1
     }
+    //uri de la imagen que seleccionamos con el picker
     private var uriImage: Uri? = null
+    //controller de los fragment
+    private lateinit var navController: NavController
+    //comprueba si el telefono introducido tiene un formato correcto
+    private var phoneValid = false
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        lateinit var sad :String
-
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -102,36 +102,30 @@ class FragmentRegister : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        navController = Navigation.findNavController(view)
         //damos formato a los campos de texto y añadimos escucha al boton
         changePasswordField(btnVerPassword1, txtPasswordRegister)
         changePasswordField(btnVerPassword2, txtPasswordRegister2)
 
+        //listener comprueba si el telefono es valido
         spinnerTelefono.setPhoneNumberValidityChangeListener {
-            if(it) Log.d("DEBUG", "HOAL")
-            else Log.d("DEBUG", "HOAL")
-
+            phoneValid = it
         }
         //añadimos escucha al campo de imagen para añadir una nueva imagen
         imagenRegister.setOnClickListener{
-            if(Build.VERSION.SDK_INT >= 22){
                 checkAndRequestPermissions()
-            } else{
-                openGallery()
-            }
         }
         icono_add_photo_register.setOnClickListener{
-            if(Build.VERSION.SDK_INT >= 22){
                 checkAndRequestPermissions()
-            } else{
-                openGallery()
-            }
         }
+        //escucha alboton de eliminar imagen
         icono_remove_photo_register.setOnClickListener{
+            //comprobamos por si se pulso por error
             val builder = AlertDialog.Builder(context)
             builder.setTitle(R.string.dialogTitleSure)
             builder.setMessage(R.string.dialogTxtDeletePhoto)
             builder.setPositiveButton(R.string.dialogOptionYes) { _: DialogInterface?, _: Int ->
+                //en caso de que este seguro, se establece la imagen por defecto
                 this.uriImage = null
                 imagenRegister.setImageResource(R.drawable.user)
                 imagenRegister.animation = AnimationUtils.loadAnimation(context!!, R.anim.fade_in)
@@ -139,102 +133,177 @@ class FragmentRegister : Fragment() {
                 icono_add_photo_register.animation = AnimationUtils.loadAnimation(context!!, R.anim.slide_down)
                 icono_remove_photo_register.visibility = View.GONE
             }
+            //si no, no hacemos nada
             builder.setNegativeButton(R.string.dialogOptionNo){_: DialogInterface?, _: Int ->}
             builder.show()
-
         }
+        //escucha al boton de registro
         btnRegistroRegister.setOnClickListener{
-            //TODO cuando coja mes del picker ++
-            txtFechaRegister.year
-            if(txtEmailRegister.text.isValid() && spinnerTelefono.fullNumberWithPlus.isValid() && txtUsernameRegister.text.isValid() && txtNombreRegister.text.isValid() &&
+            //comprobamos que todos los campos son validos
+            if(txtEmailRegister.text.isValid() && txtUsernameRegister.text.isValid() && txtNombreRegister.text.isValid() &&
                 txtApellido1Register.text.isValid() && txtApellido2Register.text.isValid() && txtPasswordRegister.text.isValid() &&
                 txtPasswordRegister2.text.isValid() && txtGeneroRegister.selectedItemPosition!=-1){
-                if(!txtEmailRegister.text.isValidEmail()){
-                    Toast.makeText(context, R.string.errorCampoEmail, Toast.LENGTH_SHORT).show()
-                } else{
-                    if(txtPasswordRegister.text.toString() == txtPasswordRegister2.text.toString()){
-                        val generoArray = arrayOf('M', 'F', 'O')
-                        //Toast.makeText(context, txtGeneroRegister.selectedItemPosition.toString(), Toast.LENGTH_SHORT).show()
-                        //Toast.makeText(context, spinnerTelefono.fullNumberWithPlus, Toast.LENGTH_SHORT).show()
-                        //Toast.makeText(context, uriImage.toString(), Toast.LENGTH_SHORT).show()
-
-                        MiRetrofitBuilder.apiService.register(
-                            RequestBody.create(MediaType.parse("text/plain"), txtEmailRegister.text.toString()),
-                            RequestBody.create(MediaType.parse("text/plain"), txtUsernameRegister.text.toString()),
-                            RequestBody.create(MediaType.parse("text/plain"), txtNombreRegister.text.toString()),
-                            RequestBody.create(MediaType.parse("text/plain"), txtApellido1Register.text.toString()),
-                            RequestBody.create(MediaType.parse("text/plain"), txtApellido2Register.text.toString()),
-                            RequestBody.create(MediaType.parse("text/plain"), "${txtFechaRegister.year}-${txtFechaRegister.month+1}-${txtFechaRegister.dayOfMonth}"),
-                            RequestBody.create(MediaType.parse("text/plain"), spinnerTelefono.fullNumberWithPlus),
-                            RequestBody.create(MediaType.parse("text/plain"), txtPasswordRegister.text.toString()),
-                            RequestBody.create(MediaType.parse("text/plain"), txtPasswordRegister2.text.toString()),
-                            RequestBody.create(MediaType.parse("text/plain"), generoArray[txtGeneroRegister.selectedItemPosition].toString()),
-                            /*txtEmailRegister.text.toString(),
-                            txtUsernameRegister.text.toString(),
-                            txtNombreRegister.text.toString(),
-                            txtApellido1Register.text.toString(),
-                            txtApellido2Register.text.toString(),
-                            "${txtFechaRegister.year}-${txtFechaRegister.month+1}-${txtFechaRegister.dayOfMonth}",
-                            spinnerTelefono.fullNumberWithPlus,
-                            txtPasswordRegister.text.toString(),
-                            txtPasswordRegister2.text.toString(),
-                            generoArray[txtGeneroRegister.selectedItemPosition].toString(),*/
-                            getImageUpload()
-                        ).enqueue(object : Callback<ResponseBody> {
-                            override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {}
-
-                            override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>?) {
-                                if(response!!.code() == 201) Log.d("retrofit", "es 201")
-                                else Log.d("retrofit", generoArray[txtGeneroRegister.selectedItemPosition].toString())
-
-                            }
-                        })
-
-
+                //comprobamos si el telefono es valido
+                if(phoneValid){
+                    //por ultimo comprobamos el email tiene el formato correcto
+                    if(!txtEmailRegister.text.isValidEmail()){
+                        Toast.makeText(context, R.string.errorCampoEmail, Toast.LENGTH_SHORT).show()
                     } else{
-                        Toast.makeText(context, R.string.errorPasswordMatch, Toast.LENGTH_SHORT).show()
+                        //si las passwords coinciden
+                        if(txtPasswordRegister.text.toString() == txtPasswordRegister2.text.toString()){
+                            //iniciamos una corrutina en el hilo de IO(in-out)
+                            CoroutineScope(IO).launch{
+                                //desactivamos el boton para no seguir enviando peticiones
+                                disableRegisterButton()
+                                //mostramos informacion al usuario
+                                showLoadingDialog()
+                                //creamos la peticion y la enviamos encolandola al server
+                                registerUser().enqueue(object : Callback<ResponseBody> {
+                                    //en caso de error al conectar con el servidor
+                                    override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
+                                        setTxtError("Error al conectar con el servidor")
+                                    }
+                                    //si obtenemos respuesta del servidor
+                                    override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>?) {
+                                        //en caso de que el recurso se haya creado
+                                        if(response!!.code() == 201) {
+                                            //mostramos informacion y volvemos al login
+                                            showToast("Registro completado")
+                                            FragmentLogin.registro = true
+                                            gotoLoginFragment()
+                                        }
+                                        //si es otro codigo de error
+                                        else {
+                                            //reactivamos el boton
+                                            enableRegisterButton()
+                                            //ocultamos l ainformacion de cargando
+                                            hideLoadingDialog()
+                                            //dependiendo del error, mostramos mensaje al usuario
+                                            val error = response.errorBody()!!.string().toString()
+                                            when(error.length){
+                                                111->{
+                                                    showToast("Email y Usuario existentes")
+                                                    setTxtError("Email y Usuario existentes")
+                                                    showTxtError(txtEmailRegister)
+                                                    showTxtError(txtUsernameRegister)
+                                                }
+                                                53->{
+                                                    showToast("Email existente")
+                                                    setTxtError("Email existente")
+                                                    showTxtError(txtEmailRegister)
+                                                }
+                                                59->{
+                                                    showToast("Usuario existente")
+                                                    setTxtError("Usuario existente")
+                                                    showTxtError(txtUsernameRegister)
+                                                }
+                                            }
+                                        }
+                                    }
+                                })
+                            }
+                //mostramos informacion al usuario sobre los campos erroneos o faltantes
+                        } else{
+                            Toast.makeText(context, R.string.errorPasswordMatch, Toast.LENGTH_SHORT).show()
+                            txtPasswordRegister.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.errorRed, context?.theme)
+                            txtPasswordRegister2.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.errorRed, context?.theme)
+
+                        }
                     }
+                } else{
+                    Toast.makeText(context, R.string.errorPhoneNumber, Toast.LENGTH_SHORT).show()
+                    txtTelefonoRegister.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.errorRed, context?.theme)
                 }
             } else{
                 Toast.makeText(context, R.string.errorCamposRellenos, Toast.LENGTH_SHORT).show()
             }
         }
-
-
     }
 
+    //funciones para cambiar elementos de la UI dentro de corrutinas
+    private fun showToast(text: String){
+        CoroutineScope(Main).launch{
+            Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+        }
+    }
+    private fun showLoadingDialog(){
+        CoroutineScope(Main).launch { progressBarRegister.visibility = View.VISIBLE }
+    }
+    private fun hideLoadingDialog(){
+        CoroutineScope(Main).launch { progressBarRegister.visibility = View.INVISIBLE }
+    }
+    private fun disableRegisterButton(){
+        CoroutineScope(Main).launch { btnRegistroRegister.isEnabled = false }
+    }
+    private fun enableRegisterButton(){
+        CoroutineScope(Main).launch { btnRegistroRegister.isEnabled = true }
+    }
+    private fun showTxtError(view: EditText){
+        CoroutineScope(Main).launch { view.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.errorRed, context?.theme) }
+    }
+    private fun setTxtError(txt: String){
+        CoroutineScope(Main).launch { txtErrorRegistro.text= txt }
+    }
+    private fun gotoLoginFragment(){ // este metodo devuelve a la pantalla del login alojada en el backstack
+        CoroutineScope(Main).launch {
+            navController.popBackStack()
+        }
+    }
+
+    //peticion al servidor con retrofit
+    private fun registerUser(): Call<ResponseBody>{
+        val generoArray = arrayOf('M', 'F', 'O')
+        return MiRetrofitBuilder.apiService.register(
+            RequestBody.create(MediaType.parse("text/plain"), txtEmailRegister.text.toString()),
+            RequestBody.create(MediaType.parse("text/plain"), txtUsernameRegister.text.toString()),
+            RequestBody.create(MediaType.parse("text/plain"), txtNombreRegister.text.toString()),
+            RequestBody.create(MediaType.parse("text/plain"), txtApellido1Register.text.toString()),
+            RequestBody.create(MediaType.parse("text/plain"), txtApellido2Register.text.toString()),
+            RequestBody.create(MediaType.parse("text/plain"), "${txtFechaRegister.year}-${txtFechaRegister.month+1}-${txtFechaRegister.dayOfMonth}"),
+            RequestBody.create(MediaType.parse("text/plain"), spinnerTelefono.fullNumberWithPlus),
+            RequestBody.create(MediaType.parse("text/plain"), txtPasswordRegister.text.toString()),
+            RequestBody.create(MediaType.parse("text/plain"), txtPasswordRegister2.text.toString()),
+            RequestBody.create(MediaType.parse("text/plain"), generoArray[txtGeneroRegister.selectedItemPosition].toString()),
+            getImageUpload()
+        )
+    }
+
+    //metodo que transforma la url de la imagen en un fichero de imagen
     private fun getImageUpload() : MultipartBody.Part?{
+        //comrpobamos si hay uri establecida (imagen seleccionada)
         if(this.uriImage != null) {
+            //lo transformamos en bitmap, dependiendo de la version del cliente
             val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 ImageDecoder.decodeBitmap(ImageDecoder.createSource(context!!.contentResolver, this.uriImage!!))
             } else {
                 MediaStore.Images.Media.getBitmap(context!!.contentResolver, this.uriImage)
             }
+            //creamos el ficheo en formato jpg
             val file = File(context!!.cacheDir, txtUsernameRegister.text.toString()+".jpg")
             file.createNewFile()
+            //creamos el array de bytes para transformar el bitmap en array
             val bos = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, bos)
             val bitmapdata = bos.toByteArray()
-            var fos :FileOutputStream? = null
+            val fos :FileOutputStream?
+            //y lo escribimos en nuestro nuevo fichero
             try{
                 fos = FileOutputStream(file)
                 fos.write(bitmapdata)
                 fos.flush()
                 fos.close()
-                Log.d("retrofit", "FICHERO"+file.name)
-                Log.d("retrofit", "FICHERO"+file.absoluteFile)
-                Log.d("retrofit", "FICHERO"+file.path)
-                Log.d("retrofit", "FICHERO"+file.extension)
-                Log.d("retrofit", "FICHERO"+file.nameWithoutExtension)
             } catch(e: FileNotFoundException){
                 e.printStackTrace()
             } catch (e: IOException){
                 e.printStackTrace()
             }
+            //creamos el requestbody de la peticion que incluye nuestra imagen
             val requestFile = RequestBody.create(MediaType.parse(MimeTypeMap.getFileExtensionFromUrl(uriImage!!.toString())), file)
             //val requestFile = RequestBody.create(MediaType.parse("image/*"), file)
+            //y lo devolvemos
             return MultipartBody.Part.createFormData("imagen", file.name, requestFile)
         }
+        //en caso de que no haya imagen, creamos un recurso "vacio" y lo devolvemos
         val requestFile = RequestBody.create(MediaType.parse("text/plain"), "")
         return MultipartBody.Part.createFormData("imagen", null, requestFile)
     }
@@ -287,7 +356,7 @@ class FragmentRegister : Fragment() {
         })
     }
 
-    //metodo para abrir la galeria
+    //metodo para abrir la galeria con un intent
     private fun openGallery(){
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "image/*"
@@ -319,13 +388,14 @@ class FragmentRegister : Fragment() {
                     }
                 } else if(resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE){
                     Toast.makeText(activity, "Error al recortar la imagen", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(activity, "Error peraser", Toast.LENGTH_SHORT).show()
                 }
             }
         }
 
 
     }
-
+    //metodo que abre la actividad que recorta las imagenes
     private fun launchImageCrop(uri: Uri){
         CropImage.activity(uri)
             .setGuidelines(CropImageView.Guidelines.ON_TOUCH)
@@ -333,15 +403,16 @@ class FragmentRegister : Fragment() {
             .setCropShape(CropImageView.CropShape.RECTANGLE)
             .start(context!!, this)
     }
-
+    //comrpobamos si tenemos los permisos y si no los pedimos para abrir la galeria
     private fun checkAndRequestPermissions(){
         if(ContextCompat.checkSelfPermission(context!!, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
             if(ActivityCompat.shouldShowRequestPermissionRationale(activity as Activity ,android.Manifest.permission.READ_EXTERNAL_STORAGE)){
-                Toast.makeText(activity, "holaaaaa", Toast.LENGTH_LONG).show()
+                openGallery()
             } else{
                 ActivityCompat.requestPermissions(activity as Activity, arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
                     PERMISSIONSTORAGE
                 )
+
             }
         } else{
             openGallery()
