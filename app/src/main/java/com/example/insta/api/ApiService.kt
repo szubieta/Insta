@@ -16,7 +16,7 @@ interface ApiService {
 
     @GET("api/usuarios/get")
     fun getUserLogged(
-        @Header("Authorization: Token ") token: String
+        @Header("Authorization") token: String
     ):Call<User>
 
     @Multipart
@@ -34,4 +34,5 @@ interface ApiService {
         @Part("genero") genero:RequestBody,
         @Part imagen:MultipartBody.Part?
     ):Call<ResponseBody>
+
 }

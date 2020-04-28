@@ -9,6 +9,7 @@
     <string name="email">Email</string>
     <string name="password">Contraseña</string>
     <string name="txtLoginRegistrar">Crear cuenta</string>
+    <string name="txtEstadoSuccess">Usuario registrado correctamente</string>
 
     <!-- REGISTRO-->
     <string name="txtEmail">Email</string>
@@ -36,6 +37,7 @@
     <string name="errorCampoEmail">El formato del email no es correcto</string>
     <string name="errorPasswordMatch">Las contraseñas deben coincidir</string>
     <string name="errorServerConnect">Error al conectar con el servidor</string>
+    <string name="errorLoginCredentials">No se puede iniciar sesión con los datos proporcionados</string>
 
 
     <!-- Dialogs -->

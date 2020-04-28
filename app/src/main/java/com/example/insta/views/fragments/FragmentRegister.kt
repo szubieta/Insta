@@ -71,7 +71,7 @@ class FragmentRegister : Fragment() {
         val view = inflater.inflate(R.layout.fragment_register, container, false)
         //crear y añadir el adaptador al spinner
         ArrayAdapter.createFromResource(
-            context!!, R.array.genres_array , R.layout.custom_spinner
+            requireContext(), R.array.genres_array , R.layout.custom_spinner
         ).also { adapter->
             adapter.setDropDownViewResource(R.layout.custom_spinner)
             view.txtGeneroRegister.adapter = adapter
@@ -128,9 +128,9 @@ class FragmentRegister : Fragment() {
                 //en caso de que este seguro, se establece la imagen por defecto
                 this.uriImage = null
                 imagenRegister.setImageResource(R.drawable.user)
-                imagenRegister.animation = AnimationUtils.loadAnimation(context!!, R.anim.fade_in)
+                imagenRegister.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.fade_in)
                 icono_add_photo_register.visibility = View.VISIBLE
-                icono_add_photo_register.animation = AnimationUtils.loadAnimation(context!!, R.anim.slide_down)
+                icono_add_photo_register.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_down)
                 icono_remove_photo_register.visibility = View.GONE
             }
             //si no, no hacemos nada
@@ -274,12 +274,12 @@ class FragmentRegister : Fragment() {
         if(this.uriImage != null) {
             //lo transformamos en bitmap, dependiendo de la version del cliente
             val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                ImageDecoder.decodeBitmap(ImageDecoder.createSource(context!!.contentResolver, this.uriImage!!))
+                ImageDecoder.decodeBitmap(ImageDecoder.createSource(requireContext().contentResolver, this.uriImage!!))
             } else {
-                MediaStore.Images.Media.getBitmap(context!!.contentResolver, this.uriImage)
+                MediaStore.Images.Media.getBitmap(requireContext().contentResolver, this.uriImage)
             }
             //creamos el ficheo en formato jpg
-            val file = File(context!!.cacheDir, txtUsernameRegister.text.toString()+".jpg")
+            val file = File(requireContext().cacheDir, txtUsernameRegister.text.toString()+".jpg")
             file.createNewFile()
             //creamos el array de bytes para transformar el bitmap en array
             val bos = ByteArrayOutputStream()
@@ -313,14 +313,14 @@ class FragmentRegister : Fragment() {
     private fun changePasswordField(checkBox: CheckBox, txt: EditText){
         checkBox.setOnCheckedChangeListener { _, isChecked ->
             if(isChecked){
-                checkBox.animation = AnimationUtils.loadAnimation(context!!, R.anim.rotate_clockwise)
-                checkBox.buttonDrawable = ContextCompat.getDrawable(context!!, R.drawable.ic_visibility_off)
-                txt.animation = AnimationUtils.loadAnimation(context!!, R.anim.slide_in_left)
+                checkBox.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.rotate_clockwise)
+                checkBox.buttonDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.ic_visibility_off)
+                txt.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_in_left)
                 txt.transformationMethod = HideReturnsTransformationMethod.getInstance()
             } else{
-                checkBox.animation = AnimationUtils.loadAnimation(context!!, R.anim.rotate_anticlockwise)
-                checkBox.buttonDrawable = ContextCompat.getDrawable(context!!, R.drawable.ic_visibility)
-                txt.animation = AnimationUtils.loadAnimation(context!!, R.anim.slide_in_right)
+                checkBox.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.rotate_anticlockwise)
+                checkBox.buttonDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.ic_visibility)
+                txt.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_in_right)
                 txt.transformationMethod = PasswordTransformationMethod.getInstance()
 
             }
@@ -381,14 +381,13 @@ class FragmentRegister : Fragment() {
                     result.uri?.let {uriImage->
                         this.uriImage = uriImage
                         imagenRegister.setImageURI(uriImage)
-                        imagenRegister.animation = AnimationUtils.loadAnimation(context!!, R.anim.fade_in)
+                        imagenRegister.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.fade_in)
                         icono_add_photo_register.visibility = View.GONE
                         icono_remove_photo_register.visibility = View.VISIBLE
-                        icono_remove_photo_register.animation = AnimationUtils.loadAnimation(context!!, R.anim.slide_up_in)
+                        icono_remove_photo_register.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_up_in)
                     }
                 } else if(resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE){
                     Toast.makeText(activity, "Error al recortar la imagen", Toast.LENGTH_SHORT).show()
-                    Toast.makeText(activity, "Error peraser", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -401,11 +400,11 @@ class FragmentRegister : Fragment() {
             .setGuidelines(CropImageView.Guidelines.ON_TOUCH)
             .setAspectRatio(1, 1)
             .setCropShape(CropImageView.CropShape.RECTANGLE)
-            .start(context!!, this)
+            .start(requireContext(), this)
     }
     //comrpobamos si tenemos los permisos y si no los pedimos para abrir la galeria
     private fun checkAndRequestPermissions(){
-        if(ContextCompat.checkSelfPermission(context!!, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+        if(ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
             if(ActivityCompat.shouldShowRequestPermissionRationale(activity as Activity ,android.Manifest.permission.READ_EXTERNAL_STORAGE)){
                 openGallery()
             } else{
