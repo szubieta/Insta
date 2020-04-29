@@ -179,7 +179,7 @@ class FragmentLogin : Fragment() {
 
     //funcion que nos lleva al fragment de registro
     private fun gotoRegisterFragment(){
-        navController.navigate(R.id.action_fragmentLogin_to_fragmentRegister2, bundle)
+        navController.navigate(R.id.action_fragmentLogin_to_fragmentRegister2)
     }
     //funciones de peticiones al servidor
     private fun getToken(): Call<Token>{
