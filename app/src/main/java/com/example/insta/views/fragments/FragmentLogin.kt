@@ -1,15 +1,15 @@
 package com.example.insta.views.fragments
 
-import android.content.SharedPreferences
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.util.Patterns
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.core.os.bundleOf
+import android.widget.EditText
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import com.example.insta.R
@@ -17,11 +17,11 @@ import com.example.insta.api.MiRetrofitBuilder
 import com.example.insta.models.LoginUser
 import com.example.insta.models.Token
 import com.example.insta.models.User
-import com.example.insta.models.UserFollow
 import com.example.insta.utils.MiSharedPreferences
 import com.example.insta.utils.MiViewUtils
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.fragment_login.*
+import kotlinx.android.synthetic.main.fragment_login.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -34,7 +34,6 @@ class FragmentLogin : Fragment() {
 
     //atributo lateinit(inicializacion tardia) que nos permite navegar entre los fragmentos
     private lateinit var navController: NavController
-    private var userLogged: SharedPreferences? = null
     //variable estatica publica para mostrar menesajes al usuario
     companion object{
         var registro = false
@@ -62,125 +61,127 @@ class FragmentLogin : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_login, container, false)
+        val view = inflater.inflate(R.layout.fragment_login, container, false)
+        //añadimos estilo a los campos de texto
+        MiViewUtils.changeEditTextIconColor(view.txtUsername, R.color.grisClaro, requireContext())
+        MiViewUtils.changeEditTextIconColor(view.txtPassword, R.color.grisClaro, requireContext())
+        changeTextField(view.txtUsername)
+        changeTextField(view.txtPassword)
+        return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        //inicializamos el navigationcontroller para poder navegar entre fragmentos
         navController = Navigation.findNavController(view)
-
-        if(registro) setTxtError(R.string.txtEstadoSuccess)
-
+        //en caso de que hayamos registrado un usuario y sido redirigidos a este fragmento, mostramos un mensaje
+        if(registro) MiViewUtils.changeText(R.string.txtEstadoSuccess, txtEstadoRegistroLogin); MiViewUtils.changeTextViewColor(txtEstadoRegistroLogin, R.color.negro, requireContext())
+        //añadimos escucha al boton de login
         btnLogin.setOnClickListener{
-            if(!txtUsername.text.isValidEmail() || !txtPassword.text.isValid()) {
-                showToast(R.string.errorCamposRellenos)
-            } else{
-                Log.d("DEBUG", "${txtUsername.text}, ${txtPassword.text}")
-                CoroutineScope(IO).launch{
-                    showLoadingDialog()
-                    MiViewUtils.hideView(txtEstadoRegistroLogin)
-                    disableRegisterButton()
-                    getToken().enqueue(
-                        object : Callback<Token> {
-                            override fun onFailure(call: Call<Token>?, t: Throwable?) {
-
-                                showToast(R.string.errorServerConnect)
-                            }
-                            override fun onResponse(call: Call<Token>?, response: Response<Token>?) {
-
-                                if(response?.code()==200) {
-                                    response.body()?.token?.let {token->
-                                        Log.d("retrofit", token)
-                                        MiSharedPreferences.editPreferencesString("token", token)
-                                        getUserLogged(token).enqueue(
-                                            object : Callback<User>{
-                                                override fun onFailure(call: Call<User>, t: Throwable) {
-                                                    showToast(R.string.errorServerConnect)
-                                                    Log.d("retrofit", t.message.toString())
-                                                }
-                                                override fun onResponse(call: Call<User>, response: Response<User>) {
-                                                    when(response.code()){
-                                                        200->{
-                                                            val user  = response.body()
-                                                            MiSharedPreferences.editPreferencesString("email", user?.email.toString())
-                                                            MiSharedPreferences.editPreferencesString("username", user?.username.toString())
-                                                            MiSharedPreferences.editPreferencesString("nombre", user?.nombre.toString())
-                                                            MiSharedPreferences.editPreferencesString("apellido1", user?.apellido1.toString())
-                                                            MiSharedPreferences.editPreferencesString("apellido2", user?.apellido2.toString())
-                                                            MiSharedPreferences.editPreferencesString("telefono", user?.telefono.toString())
-                                                            MiSharedPreferences.editPreferencesString("imagen", user?.imagen.toString())
-                                                            MiSharedPreferences.editPreferencesString("genero", user?.genero.toString())
-                                                            MiSharedPreferences.editPreferencesString("n_seguidores", user?.n_seguidores.toString())
-                                                            MiSharedPreferences.editPreferencesString("n_seguidos", user?.n_seguidos.toString())
-                                                            MiSharedPreferences.editPreferencesString("descripcion", user?.descripcion.toString())
-                                                            val gson = Gson()
-                                                            val listUsuariosSeguidos = HashSet<UserFollow>()
-                                                            user?.seguidos?.let { it ->
-                                                                val jsonSeguidos = gson.toJson(it)
-                                                                MiSharedPreferences.editPreferencesString("seguidos", jsonSeguidos)
+            //comprobamos que los campos no esten vacios
+            if(!txtUsername.text.isValid() || !txtPassword.text.isValid()) MiViewUtils.showToast(R.string.errorCamposRellenos, requireContext())
+            else{
+                //comprobamos que el formato del email sea correcto
+                if(!txtUsername.text.isValidEmail()) MiViewUtils.showToast(R.string.errorEmailFormat, requireContext())
+                else{
+                    //iniciamos una corrutina en el hilo de entrada y salida para hacer peticion a la bd
+                    CoroutineScope(IO).launch{
+                        //mostramos informacion al usuario
+                        MiViewUtils.showView(progressBarLogin)
+                        MiViewUtils.hideView(txtEstadoRegistroLogin)
+                        //y desactivamos el boton para no hacer mas peticiones
+                        MiViewUtils.disableButton(btnLogin)
+                        //realizamos la peticion y la encolamos
+                        getToken().enqueue(
+                            object : Callback<Token> {
+                                //si la peticion falla
+                                override fun onFailure(call: Call<Token>?, t: Throwable?) {
+                                    MiViewUtils.showToast(R.string.errorServerConnect, requireContext())
+                                    MiViewUtils.hideView(progressBarLogin)
+                                }
+                                //si obtenemos respuesta
+                                override fun onResponse(call: Call<Token>?, response: Response<Token>?) {
+                                    //y el codigo es ok, podemos hacer la segunda peticion para obtener los datos
+                                    if(response?.code()==200) {
+                                        //en caso de que el body tenga un token no vacio
+                                        response.body()?.token?.let {token->
+                                            //lo añadimos a nuestros preferences
+                                            MiSharedPreferences.editPreferencesString("token", token)
+                                            //y hacemos otra peticion para obtener todos los datos del usuario logeado
+                                            getUserLogged(token).enqueue(
+                                                object : Callback<User>{
+                                                    //Si falla la peticion mostramos mensaje al usuario
+                                                    override fun onFailure(call: Call<User>, t: Throwable) {
+                                                        MiViewUtils.showToast(R.string.errorServerConnect, requireContext())
+                                                    }
+                                                    //en caso de que el servidor responda
+                                                    override fun onResponse(call: Call<User>, response: Response<User>) {
+                                                        when(response.code()){
+                                                            200->{
+                                                                //captamos el usuario y lo guardamos en nuestras preferences
+                                                                val user  = response.body()
+                                                                MiSharedPreferences.editPreferencesString("email", user?.email.toString())
+                                                                MiSharedPreferences.editPreferencesString("username", user?.username.toString())
+                                                                MiSharedPreferences.editPreferencesString("nombre", user?.nombre.toString())
+                                                                MiSharedPreferences.editPreferencesString("apellido1", user?.apellido1.toString())
+                                                                MiSharedPreferences.editPreferencesString("apellido2", user?.apellido2.toString())
+                                                                MiSharedPreferences.editPreferencesString("telefono", user?.telefono.toString())
+                                                                MiSharedPreferences.editPreferencesString("imagen", user?.imagen.toString())
+                                                                MiSharedPreferences.editPreferencesString("genero", user?.genero.toString())
+                                                                MiSharedPreferences.editPreferencesString("n_seguidores", user?.n_seguidores.toString())
+                                                                MiSharedPreferences.editPreferencesString("n_seguidos", user?.n_seguidos.toString())
+                                                                MiSharedPreferences.editPreferencesString("descripcion", user?.descripcion.toString())
+                                                                //para almacenar array lo convertimos en json
+                                                                val gson = Gson()
+                                                                user?.seguidos?.let { it ->
+                                                                    val jsonSeguidos = gson.toJson(it)
+                                                                    MiSharedPreferences.editPreferencesString("seguidos", jsonSeguidos)
+                                                                }
+                                                                user?.seguidores?.let { it ->
+                                                                    val jsonSeguidores = gson.toJson(it)
+                                                                    MiSharedPreferences.editPreferencesString("seguidores", jsonSeguidores)
+                                                                }
+                                                                MiViewUtils.hideView(progressBarLogin)
                                                             }
-                                                            val listUsuariosSeguidores = HashSet<UserFollow>()
-                                                            user?.seguidores?.let { it ->
-                                                                val jsonSeguidores = gson.toJson(it)
-                                                                MiSharedPreferences.editPreferencesString("seguidores", jsonSeguidores)
+                                                            //si la peticion es incorrecta, informamos al usuario
+                                                            401->{
+                                                                MiViewUtils.hideView(progressBarLogin)
+                                                                MiViewUtils.enableButton(btnLogin)
+                                                                MiViewUtils.changeText(R.string.errorLoginCredentials, txtEstadoRegistroLogin); MiViewUtils.changeTextViewColor(txtEstadoRegistroLogin, R.color.errorRed, requireContext())
+                                                                MiViewUtils.showView(txtEstadoRegistroLogin)
                                                             }
-                                                            hideLoadingDialog()
-                                                        }
-                                                        401->{
-                                                            Log.d("retrofit", response.errorBody()?.string().toString())
-                                                            hideLoadingDialog()
-                                                            enableRegisterButton()
-                                                            setTxtError(R.string.errorLoginCredentials)
-                                                            showView(txtEstadoRegistroLogin)
                                                         }
                                                     }
                                                 }
-                                            }
-                                        )
+                                            )
+                                        }
+                                    }
+                                    //si la consulta es erronea, informamos al usuario
+                                    else {
+                                        MiViewUtils.changeText(R.string.errorLoginCredentials, txtEstadoRegistroLogin); MiViewUtils.changeTextViewColor(txtEstadoRegistroLogin, R.color.errorRed, requireContext())
+                                        MiViewUtils.hideView(progressBarLogin)
+                                        MiViewUtils.enableButton(btnLogin)
+                                        MiViewUtils.showView(txtEstadoRegistroLogin)
                                     }
                                 }
-                                else {
-                                    setTxtError(R.string.errorLoginCredentials)
-                                    hideLoadingDialog()
-                                    enableRegisterButton()
-                                    showView(txtEstadoRegistroLogin)
-                                }
-                            }
-                        })
+                            })
+                    }
                 }
+
             }
         }
-
+        //nos lleva al fragment de registro
         btnRegistro.setOnClickListener{
             CoroutineScope(Main).launch { gotoRegisterFragment() }
         }
     }
 
-    private fun showLoadingDialog(){
-        CoroutineScope(Main).launch { progressBarLogin.visibility = View.VISIBLE }
-    }
-    private fun hideLoadingDialog(){
-        CoroutineScope(Main).launch { progressBarLogin.visibility = View.INVISIBLE }
-    }
-    private fun disableRegisterButton(){
-        CoroutineScope(Main).launch { btnLogin.isEnabled = false }
-    }
-    private fun enableRegisterButton(){
-        CoroutineScope(Main).launch { btnLogin.isEnabled = true }
-    }
-    private fun hideView(view: View){
-        CoroutineScope(Main).launch {view.visibility = View.INVISIBLE}
-    }
-    private fun showView(view: View){
-        CoroutineScope(Main).launch {view.visibility = View.VISIBLE}
-    }
 
-
+    //funcion que nos lleva al fragment de registro
     private fun gotoRegisterFragment(){
-        val bundle = bundleOf("hola" to "hola")
         navController.navigate(R.id.action_fragmentLogin_to_fragmentRegister2, bundle)
     }
-
+    //funciones de peticiones al servidor
     private fun getToken(): Call<Token>{
         return MiRetrofitBuilder.apiService.loginUser(LoginUser(txtUsername.text.toString(), txtPassword.text.toString()))
     }
@@ -193,12 +194,31 @@ class FragmentLogin : Fragment() {
     private fun CharSequence.isValidEmail() = !isNullOrEmpty() && Patterns.EMAIL_ADDRESS.matcher(this).matches()
     private fun CharSequence.isValid() = !isNullOrEmpty()
 
-    private fun showToast(text: Int){
-        CoroutineScope(Main).launch{
-            Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
-        }
+    //funcion para añadir escucha a los campos de texto
+    private fun changeTextField(txt: EditText){
+        txt.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                if(txt.text.isEmpty()){
+                    MiViewUtils.changeEditTextIconColor(txt, R.color.grisClaro, requireContext())
+                } else{
+                    MiViewUtils.changeEditTextIconColor(txt, R.color.azulClaro, requireContext())
+                }
+
+            }
+            //capturamos si entra un espacio para eliminarlo
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val textEntered = txt.text.toString()
+
+                if (textEntered.isNotEmpty() && textEntered.contains(" ")) {
+                    txt.setText(txt.text.toString().replace(" ", ""))
+                    txt.setSelection(txt.text!!.length)
+                }
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                return
+            }
+        })
     }
-    private fun setTxtError(txt: Int){
-        CoroutineScope(Main).launch { txtEstadoRegistroLogin.text= resources.getString(txt) ; txtEstadoRegistroLogin.setTextColor(resources.getColor(R.color.errorRed, requireContext().theme))}
-    }
+
 }

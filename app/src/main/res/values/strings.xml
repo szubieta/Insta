@@ -23,6 +23,7 @@
     <string name="txtTelefono">Telefono</string>
     <string name="txtImagen">Imagen</string>
     <string name="txtGenero">Género</string>
+    <string name="registerSuccess">Registro completado</string>
 
     <string-array name="genres_array">
         <item>Masculino</item>
@@ -38,6 +39,13 @@
     <string name="errorPasswordMatch">Las contraseñas deben coincidir</string>
     <string name="errorServerConnect">Error al conectar con el servidor</string>
     <string name="errorLoginCredentials">No se puede iniciar sesión con los datos proporcionados</string>
+    <string name="errorConnectServer">Error al conectar con el servidor</string>
+    <string name="errorEmailRepetido">Email existente</string>
+    <string name="errorUsernameRepetido">Usuario existente</string>
+    <string name="errorUsernameYEmailRepetido">Email y Usuario existentes</string>
+    <string name="errorEmailFormat">Compruebe el formato del email</string>
+
+
 
 
     <!-- Dialogs -->

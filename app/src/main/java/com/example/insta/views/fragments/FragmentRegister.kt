@@ -31,6 +31,7 @@ import androidx.navigation.Navigation
 
 import com.example.insta.R
 import com.example.insta.api.MiRetrofitBuilder
+import com.example.insta.utils.MiViewUtils
 import com.theartofdev.edmodo.cropper.CropImage
 import com.theartofdev.edmodo.cropper.CropImageView
 import kotlinx.android.synthetic.main.fragment_register.*
@@ -81,13 +82,13 @@ class FragmentRegister : Fragment() {
         //instanciamos el calendar a la fecha actual
         view.txtFechaRegister.maxDate = Calendar.getInstance().timeInMillis
         //cambiamos el color del icono de los textview
-        view.txtEmailRegister.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.grisClaro, context?.theme)
-        view.txtUsernameRegister.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.grisClaro, context?.theme)
-        view.txtNombreRegister.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.grisClaro, context?.theme)
-        view.txtApellido1Register.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.grisClaro, context?.theme)
-        view.txtApellido2Register.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.grisClaro, context?.theme)
-        view.txtPasswordRegister2.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.grisClaro, context?.theme)
-        view.txtPasswordRegister.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.grisClaro, context?.theme)
+        MiViewUtils.changeEditTextIconColor(view.txtEmailRegister, R.color.grisClaro, requireContext())
+        MiViewUtils.changeEditTextIconColor(view.txtUsernameRegister, R.color.grisClaro, requireContext())
+        MiViewUtils.changeEditTextIconColor(view.txtNombreRegister, R.color.grisClaro, requireContext())
+        MiViewUtils.changeEditTextIconColor(view.txtApellido1Register, R.color.grisClaro, requireContext())
+        MiViewUtils.changeEditTextIconColor(view.txtApellido2Register, R.color.grisClaro, requireContext())
+        MiViewUtils.changeEditTextIconColor(view.txtPasswordRegister2, R.color.grisClaro, requireContext())
+        MiViewUtils.changeEditTextIconColor(view.txtPasswordRegister, R.color.grisClaro, requireContext())
         //estilizamos los campos de texto escuchando
         changeTextField(view.txtEmailRegister)
         changeTextField(view.txtUsernameRegister)
@@ -154,48 +155,48 @@ class FragmentRegister : Fragment() {
                             //iniciamos una corrutina en el hilo de IO(in-out)
                             CoroutineScope(IO).launch{
                                 //desactivamos el boton para no seguir enviando peticiones
-                                disableRegisterButton()
+                                MiViewUtils.disableButton(btnRegistroRegister)
                                 //mostramos informacion al usuario
-                                showLoadingDialog()
+                                MiViewUtils.showView(progressBarRegister)
                                 //creamos la peticion y la enviamos encolandola al server
                                 registerUser().enqueue(object : Callback<ResponseBody> {
                                     //en caso de error al conectar con el servidor
                                     override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
-                                        setTxtError("Error al conectar con el servidor")
+                                        MiViewUtils.changeText(R.string.errorServerConnect, txtErrorRegistro)
                                     }
                                     //si obtenemos respuesta del servidor
                                     override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>?) {
                                         //en caso de que el recurso se haya creado
                                         if(response!!.code() == 201) {
                                             //mostramos informacion y volvemos al login
-                                            showToast("Registro completado")
+                                            MiViewUtils.showToast(R.string.registerSuccess, requireContext())
                                             FragmentLogin.registro = true
                                             gotoLoginFragment()
                                         }
                                         //si es otro codigo de error
                                         else {
                                             //reactivamos el boton
-                                            enableRegisterButton()
+                                            MiViewUtils.enableButton(btnRegistroRegister)
                                             //ocultamos l ainformacion de cargando
-                                            hideLoadingDialog()
+                                            MiViewUtils.hideView(progressBarRegister)
                                             //dependiendo del error, mostramos mensaje al usuario
                                             val error = response.errorBody()!!.string().toString()
                                             when(error.length){
                                                 111->{
-                                                    showToast("Email y Usuario existentes")
-                                                    setTxtError("Email y Usuario existentes")
-                                                    showTxtError(txtEmailRegister)
-                                                    showTxtError(txtUsernameRegister)
+                                                    MiViewUtils.showToast(R.string.errorUsernameYEmailRepetido, requireContext())
+                                                    MiViewUtils.changeText(R.string.errorUsernameYEmailRepetido, txtErrorRegistro)
+                                                    MiViewUtils.changeEditTextIconColor(txtEmailRegister, R.color.errorRed, requireContext())
+                                                    MiViewUtils.changeEditTextIconColor(txtUsernameRegister, R.color.errorRed, requireContext())
                                                 }
                                                 53->{
-                                                    showToast("Email existente")
-                                                    setTxtError("Email existente")
-                                                    showTxtError(txtEmailRegister)
+                                                    MiViewUtils.showToast(R.string.errorEmailRepetido, requireContext())
+                                                    MiViewUtils.changeText(R.string.errorEmailRepetido, txtErrorRegistro)
+                                                    MiViewUtils.changeEditTextIconColor(txtUsernameRegister, R.color.errorRed, requireContext())
                                                 }
                                                 59->{
-                                                    showToast("Usuario existente")
-                                                    setTxtError("Usuario existente")
-                                                    showTxtError(txtUsernameRegister)
+                                                    MiViewUtils.showToast(R.string.errorUsernameRepetido, requireContext())
+                                                    MiViewUtils.changeText(R.string.errorUsernameRepetido, txtErrorRegistro)
+                                                    MiViewUtils.changeEditTextIconColor(txtUsernameRegister, R.color.errorRed, requireContext())
                                                 }
                                             }
                                         }
@@ -221,29 +222,8 @@ class FragmentRegister : Fragment() {
     }
 
     //funciones para cambiar elementos de la UI dentro de corrutinas
-    private fun showToast(text: String){
-        CoroutineScope(Main).launch{
-            Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
-        }
-    }
-    private fun showLoadingDialog(){
-        CoroutineScope(Main).launch { progressBarRegister.visibility = View.VISIBLE }
-    }
-    private fun hideLoadingDialog(){
-        CoroutineScope(Main).launch { progressBarRegister.visibility = View.INVISIBLE }
-    }
-    private fun disableRegisterButton(){
-        CoroutineScope(Main).launch { btnRegistroRegister.isEnabled = false }
-    }
-    private fun enableRegisterButton(){
-        CoroutineScope(Main).launch { btnRegistroRegister.isEnabled = true }
-    }
-    private fun showTxtError(view: EditText){
-        CoroutineScope(Main).launch { view.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.errorRed, context?.theme) }
-    }
-    private fun setTxtError(txt: String){
-        CoroutineScope(Main).launch { txtErrorRegistro.text= txt }
-    }
+
+
     private fun gotoLoginFragment(){ // este metodo devuelve a la pantalla del login alojada en el backstack
         CoroutineScope(Main).launch {
             navController.popBackStack()
@@ -315,12 +295,10 @@ class FragmentRegister : Fragment() {
             if(isChecked){
                 checkBox.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.rotate_clockwise)
                 checkBox.buttonDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.ic_visibility_off)
-                txt.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_in_left)
                 txt.transformationMethod = HideReturnsTransformationMethod.getInstance()
             } else{
                 checkBox.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.rotate_anticlockwise)
                 checkBox.buttonDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.ic_visibility)
-                txt.animation = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_in_right)
                 txt.transformationMethod = PasswordTransformationMethod.getInstance()
 
             }
@@ -334,13 +312,13 @@ class FragmentRegister : Fragment() {
         txt.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 if(txt.text.isEmpty()){
-                    txt.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.grisClaro, context?.theme)
+                    MiViewUtils.changeEditTextIconColor(txt, R.color.grisClaro, requireContext())
                 } else{
-                    txt.compoundDrawableTintList = context?.resources?.getColorStateList(R.color.azulClaro, context?.theme)
+                    MiViewUtils.changeEditTextIconColor(txt, R.color.azulClaro, requireContext())
                 }
 
             }
-
+            //capturamos si entra un espacio para eliminarlo
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val textEntered = txt.text.toString()
 
