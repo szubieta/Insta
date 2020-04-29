@@ -31,6 +31,7 @@ import androidx.navigation.Navigation
 
 import com.example.insta.R
 import com.example.insta.api.MiRetrofitBuilder
+import com.example.insta.utils.MiImageUtils
 import com.example.insta.utils.MiViewUtils
 import com.theartofdev.edmodo.cropper.CropImage
 import com.theartofdev.edmodo.cropper.CropImageView
@@ -252,31 +253,7 @@ class FragmentRegister : Fragment() {
     private fun getImageUpload() : MultipartBody.Part?{
         //comrpobamos si hay uri establecida (imagen seleccionada)
         if(this.uriImage != null) {
-            //lo transformamos en bitmap, dependiendo de la version del cliente
-            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                ImageDecoder.decodeBitmap(ImageDecoder.createSource(requireContext().contentResolver, this.uriImage!!))
-            } else {
-                MediaStore.Images.Media.getBitmap(requireContext().contentResolver, this.uriImage)
-            }
-            //creamos el ficheo en formato jpg
-            val file = File(requireContext().cacheDir, txtUsernameRegister.text.toString()+".jpg")
-            file.createNewFile()
-            //creamos el array de bytes para transformar el bitmap en array
-            val bos = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, bos)
-            val bitmapdata = bos.toByteArray()
-            val fos :FileOutputStream?
-            //y lo escribimos en nuestro nuevo fichero
-            try{
-                fos = FileOutputStream(file)
-                fos.write(bitmapdata)
-                fos.flush()
-                fos.close()
-            } catch(e: FileNotFoundException){
-                e.printStackTrace()
-            } catch (e: IOException){
-                e.printStackTrace()
-            }
+            val file = MiImageUtils.uriToFile(uriImage!!, txtUsernameRegister.text.toString()+".jpg", requireContext())
             //creamos el requestbody de la peticion que incluye nuestra imagen
             val requestFile = RequestBody.create(MediaType.parse(MimeTypeMap.getFileExtensionFromUrl(uriImage!!.toString())), file)
             //val requestFile = RequestBody.create(MediaType.parse("image/*"), file)

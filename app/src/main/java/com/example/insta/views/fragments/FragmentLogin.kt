@@ -1,5 +1,6 @@
 package com.example.insta.views.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -19,6 +20,8 @@ import com.example.insta.models.Token
 import com.example.insta.models.User
 import com.example.insta.utils.MiSharedPreferences
 import com.example.insta.utils.MiViewUtils
+import com.example.insta.views.activities.Activity2
+import com.example.insta.views.activities.MainActivity
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.fragment_login.*
 import kotlinx.android.synthetic.main.fragment_login.view.*
@@ -43,12 +46,7 @@ class FragmentLogin : Fragment() {
         super.onCreate(savedInstanceState)
         //TODO comprobar si existe token guardado para ir al siguiente fragmento
         //autenticar al usuario antes de crear la actividad
-        /*if(true){
-            val intent = Intent(this, Activity2::class.java)
-            startActivity(intent)
-            finish()
-        }*/
-        //
+
         Log.d("retrofit", MiSharedPreferences.getPreferencesString("email").toString())
         Log.d("retrofit", MiSharedPreferences.getPreferencesString("username").toString())
         Log.d("retrofit", MiSharedPreferences.getPreferencesString("nombre").toString())
@@ -98,6 +96,7 @@ class FragmentLogin : Fragment() {
                                 override fun onFailure(call: Call<Token>?, t: Throwable?) {
                                     MiViewUtils.showToast(R.string.errorServerConnect, requireContext())
                                     MiViewUtils.hideView(progressBarLogin)
+                                    MiViewUtils.enableButton(btnLogin)
                                 }
                                 //si obtenemos respuesta
                                 override fun onResponse(call: Call<Token>?, response: Response<Token>?) {
@@ -113,6 +112,7 @@ class FragmentLogin : Fragment() {
                                                     //Si falla la peticion mostramos mensaje al usuario
                                                     override fun onFailure(call: Call<User>, t: Throwable) {
                                                         MiViewUtils.showToast(R.string.errorServerConnect, requireContext())
+                                                        MiViewUtils.enableButton(btnLogin)
                                                     }
                                                     //en caso de que el servidor responda
                                                     override fun onResponse(call: Call<User>, response: Response<User>) {
