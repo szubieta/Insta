@@ -32,6 +32,7 @@ import androidx.navigation.Navigation
 import com.example.insta.R
 import com.example.insta.api.MiRetrofitBuilder
 import com.example.insta.utils.MiImageUtils
+import com.example.insta.utils.MiNavController
 import com.example.insta.utils.MiViewUtils
 import com.theartofdev.edmodo.cropper.CropImage
 import com.theartofdev.edmodo.cropper.CropImageView
@@ -59,8 +60,6 @@ class FragmentRegister : Fragment() {
     }
     //uri de la imagen que seleccionamos con el picker
     private var uriImage: Uri? = null
-    //controller de los fragment
-    private lateinit var navController: NavController
     //comprueba si el telefono introducido tiene un formato correcto
     private var phoneValid = false
 
@@ -80,6 +79,7 @@ class FragmentRegister : Fragment() {
         }
         //añadimos una imagen por defecto al imageview de imagen de usuario
         view.imagenRegister.setImageResource(R.drawable.user)
+        view.imagenRegister.circleBackgroundColor = resources.getColor(R.color.blancoFondo, requireContext().theme)
         //instanciamos el calendar a la fecha actual
         view.txtFechaRegister.maxDate = Calendar.getInstance().timeInMillis
         //cambiamos el color del icono de los textview
@@ -104,7 +104,7 @@ class FragmentRegister : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        navController = Navigation.findNavController(view)
+        MiNavController.findNavController(view)
         //damos formato a los campos de texto y añadimos escucha al boton
         changePasswordField(btnVerPassword1, txtPasswordRegister)
         changePasswordField(btnVerPassword2, txtPasswordRegister2)
@@ -227,7 +227,7 @@ class FragmentRegister : Fragment() {
 
     private fun gotoLoginFragment(){ // este metodo devuelve a la pantalla del login alojada en el backstack
         CoroutineScope(Main).launch {
-            navController.popBackStack()
+            MiNavController.popBackStack()
         }
     }
 

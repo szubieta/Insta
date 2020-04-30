@@ -1,6 +1,5 @@
 package com.example.insta.views.fragments
 
-import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -11,17 +10,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import androidx.navigation.NavController
-import androidx.navigation.Navigation
 import com.example.insta.R
 import com.example.insta.api.MiRetrofitBuilder
 import com.example.insta.models.LoginUser
 import com.example.insta.models.Token
 import com.example.insta.models.User
+import com.example.insta.utils.MiNavController
 import com.example.insta.utils.MiSharedPreferences
 import com.example.insta.utils.MiViewUtils
-import com.example.insta.views.activities.Activity2
-import com.example.insta.views.activities.MainActivity
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.fragment_login.*
 import kotlinx.android.synthetic.main.fragment_login.view.*
@@ -35,8 +31,6 @@ import retrofit2.Response
 
 class FragmentLogin : Fragment() {
 
-    //atributo lateinit(inicializacion tardia) que nos permite navegar entre los fragmentos
-    private lateinit var navController: NavController
     //variable estatica publica para mostrar menesajes al usuario
     companion object{
         var registro = false
@@ -71,7 +65,7 @@ class FragmentLogin : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         //inicializamos el navigationcontroller para poder navegar entre fragmentos
-        navController = Navigation.findNavController(view)
+        MiNavController.findNavController(view)
         //en caso de que hayamos registrado un usuario y sido redirigidos a este fragmento, mostramos un mensaje
         if(registro) MiViewUtils.changeText(R.string.txtEstadoSuccess, txtEstadoRegistroLogin); MiViewUtils.changeTextViewColor(txtEstadoRegistroLogin, R.color.negro, requireContext())
         //añadimos escucha al boton de login
@@ -142,6 +136,7 @@ class FragmentLogin : Fragment() {
                                                                     MiSharedPreferences.editPreferencesString("seguidores", jsonSeguidores)
                                                                 }
                                                                 MiViewUtils.hideView(progressBarLogin)
+                                                                requireActivity().setContentView(R.layout.activity_logged)
                                                             }
                                                             //si la peticion es incorrecta, informamos al usuario
                                                             401->{
@@ -179,7 +174,7 @@ class FragmentLogin : Fragment() {
 
     //funcion que nos lleva al fragment de registro
     private fun gotoRegisterFragment(){
-        navController.navigate(R.id.action_fragmentLogin_to_fragmentRegister2)
+        MiNavController.navigate(R.id.action_fragmentLogin_to_fragmentRegister2)
     }
     //funciones de peticiones al servidor
     private fun getToken(): Call<Token>{

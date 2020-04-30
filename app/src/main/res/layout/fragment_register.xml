@@ -5,7 +5,6 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FFFF"
         android:layout_gravity="center_horizontal">
 
     <Button
@@ -92,7 +91,8 @@
                     android:contentDescription="@string/txtImagen"
                     app:civ_border_color="#7A7A7A"
                     app:civ_border_overlay="true"
-                    app:civ_border_width="0.2dp" />
+                    app:civ_border_width="0.2dp"
+                    />
 
                 <ImageView
                     android:id="@+id/icono_add_photo_register"
@@ -149,6 +149,9 @@
                     android:background="@drawable/borde_edittext"
                     android:elevation="10dp"
                     android:fontFamily="@font/comfortaa_light"
+                    app:ccpDialog_textColor="@color/grisClaro"
+                    app:ccp_contentColor="@color/grisClaro"
+                    app:ccp_flagBorderColor="@color/blancoFondo"
                     android:gravity="center"
                     android:prompt="@string/txtTelefono"
                     app:ccp_autoDetectCountry="true"
