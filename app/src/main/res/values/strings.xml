@@ -37,6 +37,16 @@
     <string name="menu_add">Añadir</string>
     <string name="menu_recent">Reciente</string>
     <string name="menu_profile">Perfil</string>
+    <string name="menu_camera">Cámara</string>
+    <string name="menu_camera_description">Abrir Cámara</string>
+    <string name="menu_mensaje">Mensaje</string>
+    <string name="menu_mensaje_description">Abrir Mensajes</string>
+
+    <!--PUBLICACION_LISTITEM-->
+    <string name="strUsernameHeaderPublicacion">username</string>
+    <string name="strLocalizacionPublicacion">localizacion</string>
+    <string name="strUsernameBodyPublicacion">username</string>
+    <string name="strDescripcionImagePublicacion">Imagen usuario</string>
 
 
     <!-- ERRORES -->

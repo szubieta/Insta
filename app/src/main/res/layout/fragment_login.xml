@@ -5,9 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center_horizontal"
-    style="@style/Theme.AppCompat.DayNight.NoActionBar">
+    style="@style/Theme.AppCompat.DayNight.NoActionBar"
+    android:clipToPadding="false">
 
     <RelativeLayout
+        style="@style/Theme.MaterialComponents.DayNight"
         android:id="@+id/relativeLayout"
         android:layout_width="373dp"
         android:layout_height="361dp"
@@ -17,7 +19,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.043"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:elevation="10dp"
+        android:fadingEdgeLength="10dp">
 
         <TextView
             android:id="@+id/txtlogin"
@@ -37,6 +41,7 @@
             android:textStyle="bold" />
 
         <EditText
+            android:autofillHints="@string/email"
             android:id="@+id/txtUsername"
             android:layout_width="282dp"
             android:layout_height="52dp"
@@ -56,6 +61,7 @@
             android:inputType="textEmailAddress" />
 
         <EditText
+            android:autofillHints="@string/password"
             android:id="@+id/txtPassword"
             android:layout_width="282dp"
             android:layout_height="52dp"

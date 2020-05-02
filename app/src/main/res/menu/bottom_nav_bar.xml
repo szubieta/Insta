@@ -3,24 +3,27 @@
     <item
         android:id="@+id/homeFragment"
         android:title="@string/menu_home"
-        android:icon="@drawable/ic_telefono"
+        android:icon="@drawable/ic_home"
         />
     <item
-        android:id="@+id/profileFragment"
+        android:id="@+id/exploreFragment"
         android:title="@string/menu_explore"
-        android:icon="@drawable/ic_remove_circle"
+        android:icon="@drawable/ic_explore"
         />
     <item
+        android:id="@+id/addFragment"
         android:title="@string/menu_add"
         android:icon="@drawable/destello"
         />
     <item
+        android:id="@+id/recentFragment"
         android:title="@string/menu_recent"
-        android:icon="@drawable/ic_user"
+        android:icon="@drawable/ic_heart_filled"
         />
     <item
+        android:id="@+id/profileFragment"
         android:title="@string/menu_profile"
-        android:icon="@drawable/ic_add_circle_black_24dp"
+        android:icon="@drawable/ic_user"
         />
 
 </menu>
